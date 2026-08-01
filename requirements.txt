@@ -1,0 +1,4 @@
+# 请先根据本机CUDA环境单独安装PyTorch，再安装以下依赖。
+transformers>=4.37
+safetensors>=0.4
+huggingface-hub>=0.20
