@@ -1,85 +1,72 @@
-# qwenRepo
+# qwenRepo：从模型结构到推理性能
 
-一个从 `Qwen2.5-0.5B-Instruct` 出发学习大语言模型结构、推理链路与性能特征的实验仓库。当前阶段先建立可解释、可运行的单卡推理基线，再逐步拆解 Transformer 组件、KV Cache、Prefill/Decode 与推理性能分析。
+这是一个以本地 `Qwen2.5-0.5B-Instruct` 为对象的 AI Infra 学习仓库。代码不追求重新实现完整推理引擎，而是用可验证的小实验拆解：GQA、KV Cache、Prefill/Decode、TTFT/TPOT、吞吐与显存，以及 PyTorch Profiler 的性能归因。
 
-## 学习目标
+## 你能学到什么
 
-- 理解 Tokenizer、Chat Template、Token ID 与文本生成之间的关系。
-- 观察 Qwen2.5 的 Embedding、RMSNorm、RoPE、GQA、SwiGLU 和 LM Head 结构。
-- 理解从 Prompt 到 Tokenize、Forward、Logits、Decode 的完整推理链路。
-- 分析参数、激活与 KV Cache 的显存占用，以及 Prefill/Decode 的性能差异。
-- 逐步建立延迟、吞吐、显存和正确性可复现的评测方法。
+- 从 Q/K/V 张量形状理解 Grouped Query Attention（GQA）及 KV Head 共享。
+- 验证带 KV Cache 的逐 Token Decode 与完整重算在数值上等价。
+- 推导并实测 KV Cache 显存：`2 × layers × batch × kv_heads × sequence × head_dim × element_size`。
+- 区分 Prefill 与 Decode：前者通常更偏计算密集，后者通常更受访存和调度开销影响。
+- 使用 CUDA Event 测量模型侧 TTFT、TPOT 和 Decode throughput，避免把 CPU 异步提交时间误当作 GPU 执行时间。
+- 使用 PyTorch Profiler 和 Chrome Trace 分析算子、张量形状、CPU/GPU 时间及显存分配。
 
-## 当前内容
-
-| 文件 | 内容 |
-|---|---|
-| `scripts/check_model.py` | 检查CUDA环境，加载本地模型并统计参数量与显存占用 |
-| `scripts/inspect_model.py` | 打印模型模块树，观察Qwen2.5网络结构 |
-| `scripts/first_inference.py` | 完成Chat Template、Tokenize、Generate与Decode推理链路 |
-| `labs/` | 后续按主题补充的可修改实验 |
-
-## 目录结构
+## 目录
 
 ```text
 qwenRepo/
-├─ scripts/       # 环境检查、模型检查与基础推理脚本
-├─ labs/          # 按学习顺序组织的实验
-├─ models/        # 本地模型权重，不纳入Git
-├─ requirements.txt
-└─ README.md
+├─ src/qwenrepo/       # 可复用的模型、GQA、KV Cache 和 benchmark 工具
+├─ labs/               # 按学习顺序组织的实验
+├─ scripts/            # 环境检查、推理、批量基准入口
+├─ tests/              # 数值正确性、公式与真实模型集成测试
+├─ results/            # 可复现结果说明；latest.json 不提交
+└─ models/             # 本地权重，不纳入 Git
 ```
 
-## 环境准备
+## 环境
 
-建议使用独立环境：
+建议使用独立环境。先按显卡和驱动安装 PyTorch，再安装其余依赖和当前仓库：
 
 ```powershell
 conda create -n qwenrepo python=3.12 -y
 conda activate qwenrepo
-```
-
-先根据本机GPU和CUDA驱动，从PyTorch官方安装选择器获取对应命令，再安装其余依赖：
-
-```powershell
 python -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 
-## 准备模型
+将模型放在 `models/Qwen2.5-0.5B-Instruct/`，也可以通过每个脚本的 `--model-path` 指定路径。仓库仅保存实验代码，不重新分发模型权重。
 
-将 `Qwen/Qwen2.5-0.5B-Instruct` 下载到：
-
-```text
-models/Qwen2.5-0.5B-Instruct/
-```
-
-`models/` 已加入 `.gitignore`，约1 GB的权重和本机缓存不会进入Git历史。三个脚本都从仓库根目录解析模型路径，不依赖某台电脑的绝对路径。
-
-## 运行顺序
-
-在仓库根目录执行：
+## 推荐学习顺序
 
 ```powershell
-python scripts/check_model.py
-python scripts/inspect_model.py
-python scripts/first_inference.py
+python labs/00_tokenizer_chat_template.py
+python labs/01_attention_gqa.py
+python labs/02_kv_cache.py
+python labs/03_prefill_decode.py --batch-size 1 --prompt-length 128
+python labs/04_benchmark_grid.py --batch-sizes 1 2 --prompt-lengths 32 128 512
+python labs/05_inference_profile.py --prompt-length 128
+python -m unittest discover -s tests -v
 ```
 
-建议每次实验都记录：运行环境、输入shape和dtype、预期结果、实测结果、显存变化及结论边界。
+真实模型集成测试默认跳过；显式提供本地模型路径后运行：
 
-## 学习路线
+```powershell
+$env:QWEN_MODEL_PATH="$PWD\models\Qwen2.5-0.5B-Instruct"
+python -m unittest tests.test_model_integration -v
+```
 
-1. Tokenizer、Chat Template与生成结果切片。
-2. Transformer Block、GQA、RoPE、RMSNorm与SwiGLU。
-3. Attention张量shape与Mask传播。
-4. KV Cache及Prefill/Decode阶段差异。
-5. Greedy、Sampling、Top-k与Top-p生成策略。
-6. PyTorch Profiler下的算子耗时与显存归因。
-7. Batch Size、上下文长度、吞吐与延迟权衡。
-8. 量化、推理引擎和服务化作为后续扩展。
+## 指标口径
+
+- `ttft_model_only_ms`：仅测一次 Prefill forward 的 GPU 时间，不包含 tokenizer、排队、网络与服务框架。
+- `tpot_ms`：使用 KV Cache 串行 Decode 时，每个后续 Token 的 GPU 时间中位数。
+- `decode_tokens_per_second`：批内产生的 Token 数除以 Decode GPU 总时间，并非在线服务端到端吞吐。
+- `kv_cache_bytes`：实际 Cache Tensor 的存储字节数。
+- `peak_runtime_delta_bytes`：该 Case 相对测量前已分配显存的峰值增量。
+
+使用合成 Token ID 是为了稳定控制 Batch Size 和 Context Length；结果适合比较形状趋势，不等价于线上业务压测。
 
 ## 当前边界
 
-- 当前只覆盖本地单卡推理学习，不包含预训练、微调或分布式训练。
-- 尚未实现vLLM、TensorRT-LLM、量化或在线服务性能对比。
-- 模型权重来自上游项目，仓库只保存学习代码，不重新分发权重。
+- 当前覆盖单机单卡、Hugging Face Transformers 推理链路，不包含 vLLM、TensorRT-LLM 或在线 Serving。
+- 尚未覆盖 PagedAttention、Continuous Batching、量化、Tensor Parallel 和多机通信。
+- 所有性能结论都应注明 GPU、PyTorch/Transformers/CUDA 版本、dtype、shape、预热和采样次数。

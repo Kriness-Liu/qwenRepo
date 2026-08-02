@@ -1,0 +1,129 @@
+{
+  "generated_at_utc": "2026-08-02T03:46:40.490909+00:00",
+  "environment": {
+    "torch": "2.9.0+cu126",
+    "transformers": "5.14.1",
+    "cuda_runtime": "12.6",
+    "device": "NVIDIA GeForce GTX 1650",
+    "dtype": "torch.float16",
+    "model_type": "qwen2"
+  },
+  "methodology": {
+    "timer": "CUDA Event",
+    "ttft_scope": "model-only prefill; tokenization excluded",
+    "tpot_scope": "sequential cached decode after first token",
+    "synthetic_token_ids": true,
+    "warmup": 2,
+    "iterations": 10
+  },
+  "cases": [
+    {
+      "batch_size": 1,
+      "prompt_length": 32,
+      "decode_tokens": 16,
+      "ttft_model_only_ms": 85.98512268066406,
+      "prefill": {
+        "samples": 10,
+        "p50_ms": 85.98512268066406,
+        "p95_ms": 87.00676231384277,
+        "mean_ms": 86.01615447998047
+      },
+      "tpot_ms": 41.39177703857422,
+      "decode_mean_ms": 41.647517903645834,
+      "decode_p95_ms": 43.49890480041504,
+      "decode_tokens_per_second": 24.011034758747527,
+      "kv_cache_bytes": 577536,
+      "peak_runtime_delta_bytes": 1772544
+    },
+    {
+      "batch_size": 1,
+      "prompt_length": 128,
+      "decode_tokens": 16,
+      "ttft_model_only_ms": 277.9231262207031,
+      "prefill": {
+        "samples": 10,
+        "p50_ms": 277.9231262207031,
+        "p95_ms": 281.74884033203125,
+        "mean_ms": 278.44272766113284
+      },
+      "tpot_ms": 41.6767692565918,
+      "decode_mean_ms": 41.6211799621582,
+      "decode_p95_ms": 42.06105422973633,
+      "decode_tokens_per_second": 24.026228975468637,
+      "kv_cache_bytes": 1757184,
+      "peak_runtime_delta_bytes": 7308288
+    },
+    {
+      "batch_size": 1,
+      "prompt_length": 512,
+      "decode_tokens": 16,
+      "ttft_model_only_ms": 1071.4664916992188,
+      "prefill": {
+        "samples": 10,
+        "p50_ms": 1071.4664916992188,
+        "p95_ms": 1079.7956420898438,
+        "mean_ms": 1073.52919921875
+      },
+      "tpot_ms": 42.50624084472656,
+      "decode_mean_ms": 42.66697616577149,
+      "decode_p95_ms": 43.464355087280275,
+      "decode_tokens_per_second": 23.437329988297247,
+      "kv_cache_bytes": 6475776,
+      "peak_runtime_delta_bytes": 52047360
+    },
+    {
+      "batch_size": 2,
+      "prompt_length": 32,
+      "decode_tokens": 16,
+      "ttft_model_only_ms": 154.6403579711914,
+      "prefill": {
+        "samples": 10,
+        "p50_ms": 154.6403579711914,
+        "p95_ms": 155.13276596069335,
+        "mean_ms": 154.6251434326172
+      },
+      "tpot_ms": 54.212608337402344,
+      "decode_mean_ms": 54.031281026204425,
+      "decode_p95_ms": 54.86946525573731,
+      "decode_tokens_per_second": 37.015594707629226,
+      "kv_cache_bytes": 1155072,
+      "peak_runtime_delta_bytes": 3514880
+    },
+    {
+      "batch_size": 2,
+      "prompt_length": 128,
+      "decode_tokens": 16,
+      "ttft_model_only_ms": 580.4794616699219,
+      "prefill": {
+        "samples": 10,
+        "p50_ms": 580.4794616699219,
+        "p95_ms": 584.5882751464844,
+        "mean_ms": 581.2455810546875
+      },
+      "tpot_ms": 53.95667266845703,
+      "decode_mean_ms": 54.34826685587565,
+      "decode_p95_ms": 56.77835235595704,
+      "decode_tokens_per_second": 36.79970154896996,
+      "kv_cache_bytes": 3514368,
+      "peak_runtime_delta_bytes": 15631360
+    },
+    {
+      "batch_size": 2,
+      "prompt_length": 512,
+      "decode_tokens": 16,
+      "ttft_model_only_ms": 2143.9525146484375,
+      "prefill": {
+        "samples": 10,
+        "p50_ms": 2143.9525146484375,
+        "p95_ms": 2148.266455078125,
+        "mean_ms": 2143.7074462890623
+      },
+      "tpot_ms": 56.692928314208984,
+      "decode_mean_ms": 56.92878723144531,
+      "decode_p95_ms": 58.05067863464356,
+      "decode_tokens_per_second": 35.13161086444637,
+      "kv_cache_bytes": 12951552,
+      "peak_runtime_delta_bytes": 102910464
+    }
+  ]
+}
